@@ -182,4 +182,6 @@ def grid_sampler(g, input, grid, mode, padding_mode, align_corners): #long, long
     mode_i = sym_help._maybe_get_scalar(mode)
     paddingmode_i = sym_help._maybe_get_scalar(padding_mode)
     aligncorners_i = sym_help._maybe_get_scalar(align_corners)
-    return g.op("GridSampler", input, grid, interpolationmode_i=mode_i, paddingmode_i=paddingmode_i, aligncorners_i=aligncorners_i) #just a dummy definition for onnx runtime since we don't need onnx inference
+
+    return g.op("GridSampler", input, grid, interpolationmode_i=mode_i, paddingmode_i=paddingmode_i,
+     aligncorners_i=aligncorners_i) #just a dummy definition for onnx runtime since we don't need onnx inference

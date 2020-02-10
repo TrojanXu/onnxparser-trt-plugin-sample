@@ -1,5 +1,5 @@
 #
-# Copyright 1993-2020 NVIDIA Corporation.  All rights reserved.
+# Copyright 1993-2019 NVIDIA Corporation.  All rights reserved.
 #
 # NOTICE TO LICENSEE:
 #
@@ -150,13 +150,19 @@ class HostDeviceMem(object):
         return self.__str__()
 
 # Allocates all buffers required for an engine, i.e. host/device inputs/outputs.
-def allocate_buffers(engine):
+def allocate_buffers(engine, is_explicit_batch=False, context_batch_size=1):
     inputs = []
     outputs = []
     bindings = []
     stream = cuda.Stream()
+    batch_size = engine.max_batch_size
+    if  is_explicit_batch:
+        batch_size = context_batch_size
     for binding in engine:
-        size = trt.volume(engine.get_binding_shape(binding)) * engine.max_batch_size
+        dims = engine.get_binding_shape(binding)
+        if dims[0] == -1:
+            dims[0] = batch_size
+        size = trt.volume(dims) * engine.max_batch_size
         dtype = trt.nptype(engine.get_binding_dtype(binding))
         # Allocate host and device buffers
         host_mem = cuda.pagelocked_empty(size, dtype)

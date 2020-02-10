@@ -17,30 +17,34 @@
 #ifndef GRID_SAMPLER_PLUGIN_H
 #define GRID_SAMPLER_PLUGIN_H
 
+#include "gridSampler.h"
 #include "NvInferPlugin.h"
 #include "plugin.h"
-#include "gridSampler.h"
 #include <string>
 #include <vector>
 
 using namespace nvinfer1::plugin;
 
+// One of the preferred ways of making TensorRT to be able to see
+// our custom layer requires extending IPluginV2DynamicExt and BaseCreator classes.
+// For requirements for overriden functions, check TensorRT API docs.
 namespace nvinfer1
 {
 namespace plugin
 {
 
-using detail::GridSamplerInterpolation;
-using detail::GridSamplerPadding;
+using torch::detail::GridSamplerInterpolation;
+using torch::detail::GridSamplerPadding;
+using torch::detail::GridSamplerDataType;
 
 class GridSamplerPlugin : public IPluginV2DynamicExt
 {
 public:
-    GridSamplerPlugin(const std::string name);
-    GridSamplerPlugin(const std::string name, GridSamplerInterpolation interpolationMode, GridSamplerPadding paddingMode, bool alignCorners);
+    GridSamplerPlugin(const std::string name, GridSamplerInterpolation interpolationMode, GridSamplerPadding paddingMode
+        , bool alignCorners);
     GridSamplerPlugin(const std::string name, int inputChannel, int inputHeight,
         int inputWidth, int gridHeight, int gridWidth, GridSamplerInterpolation interpolationMode,
-        GridSamplerPadding paddingMode, bool alignCorners);
+        GridSamplerPadding paddingMode, bool alignCorners, DataType type);
     GridSamplerPlugin(const std::string name, const void* serial_buf, size_t serial_size);
     // It doesn't make sense to make GridSamplerPlugin without arguments, so we delete default constructor.
     GridSamplerPlugin() = delete;
@@ -85,6 +89,8 @@ private:
     GridSamplerPadding mPaddingMode;
     bool mAlignCorners;
     std::string mNamespace;
+    DataType mType;
+
 
 protected:
     // For deprecated methods, To prevent compiler warnings.

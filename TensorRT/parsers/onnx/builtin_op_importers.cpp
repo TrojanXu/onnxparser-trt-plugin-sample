@@ -324,6 +324,8 @@ DEFINE_BUILTIN_OP_IMPORTER(GridSampler)
     tensors.push_back(&convertToTensor(inputs.at(0), ctx));
     tensors.push_back(&convertToTensor(inputs.at(1), ctx));
 
+    LOG_VERBOSE("call grid sampler: ");
+
     const std::string pluginName = "GridSampler";
     const std::string pluginVersion = "1";
     
