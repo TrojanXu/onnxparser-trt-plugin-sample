@@ -44,6 +44,7 @@ Currently, to get torch-onnx-tensorrt working with custom op, you have to
     custom op, you have to write c code and recompile. This makes the solution even messier. It's not the best solution but workable. Note that all op registered in symbolic_opset10.py will be registered to onnx domain (this is forbidden in register_custom_op_symbolic() method).
 2. Let onnxparser understand how to translate the custom op exists in onnx file to TensorRT layers including plugins. Thus we need to hack into builtin_op_importers.cpp
 3. Let TensorRT know there's a new custom op named GridSampler. Here we implemented it as a plugin. Addtionally, since onnxparser only works with full dimension mode, we have to implement the trt plugin using IPluginV2DynamicExt introduced in TRT6.
+4. Dynamic shape can be used if you export onnx model using dynamic_axes as illustrated in test_plugin_result.py. This will be processed in onnx-tensorrt module and then addInput is called using -1 as dummpy input dim. About how to build engine and context for dynamic shape, please refer to test_plugin_result.py.
 
 # Limitations
 1. This is not officially supported, thus an experimental sample.
