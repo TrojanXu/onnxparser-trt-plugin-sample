@@ -34,7 +34,7 @@ Once built onnx parser, remember to **make install** and **python setup.py build
 
 After that, rebuild TensorRT OSS project.
 
-Done. Run LD_PRELOAD=/PATH/TO/YOUR/BUILT/libnvinfer_plugin.so python test.py to see if it's working
+Done. Run LD_PRELOAD=/PATH/TO/YOUR/BUILT/libnvinfer_plugin.so python test_plugin_result.py to see if it's working
 
 # How it works
 Currently, to get torch-onnx-tensorrt working with custom op, you have to
