@@ -56,6 +56,19 @@ import pycuda.autoinit
 import common
 import torch
 import torch.nn.functional as F
+import torch.onnx.symbolic_opset11 as sym_opset
+import torch.onnx.symbolic_helper as sym_help
+
+def grid_sampler(g, input, grid, mode, padding_mode, align_corners): #long, long, long: contants dtype
+    mode_i = sym_help._maybe_get_scalar(mode)
+    paddingmode_i = sym_help._maybe_get_scalar(padding_mode)
+    aligncorners_i = sym_help._maybe_get_scalar(align_corners)
+
+    return g.op("GridSampler", input, grid, interpolationmode_i=mode_i, paddingmode_i=paddingmode_i,
+     aligncorners_i=aligncorners_i) #just a dummy definition for onnx runtime since we don't need onnx inference
+
+sym_opset.grid_sampler = grid_sampler
+
 
 '''
 this samples demonstrates:
@@ -92,8 +105,8 @@ def export_onnx_model(onnx_model_file):
     # use dynamic_axes to denote the batch dim
     print(model(torch.from_numpy(input_rand[0:2, :, :, :]).float().to(dev), torch.from_numpy(grid_rand[0:2, :, :, :]).float().to(dev)))
     torch.onnx.export( model, (torch_input, torch_grid), onnx_model_file, verbose=False, 
-        input_names=['input', 'grid'],output_names=['output'],opset_version =10,
-        dynamic_axes={"input" : {0: "batch_size"}, "grid" : {0: "batch_size"}})
+        input_names=['input', 'grid'],output_names=['output'],opset_version =11,
+        dynamic_axes={"input" : {0: "batch_size"}, "grid" : {0: "batch_size"}}, enable_onnx_checker=False)
 
 # The Onnx path is used for Onnx models.
 def build_engine_onnx(model_file):
