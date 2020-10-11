@@ -18,7 +18,7 @@ This project depends on:
 3. [TensorRT OSS](https://github.com/NVIDIA/TensorRT) project 
 
 # Prepare, Build and Run
-(**If below instructions cannot guide to run the sample successfully, please checkout out one commit back. fc251f67cb56241daf30e7b7fb4b7be02c8d07e8**)
+(**If below instructions cannot guide to run the sample successfully, please checkout commit fc251f67cb56241daf30e7b7fb4b7be02c8d07e8**)
 
 Follow instructions on TensorRT OSS project to prepare all env requirements. Make sure you can build TensorRT OSS project and run the sample.
 
