@@ -58,6 +58,8 @@ import torch
 import torch.nn.functional as F
 import torch.onnx.symbolic_opset11 as sym_opset
 import torch.onnx.symbolic_helper as sym_help
+import onnx_graphsurgeon as gs
+import onnx
 
 def grid_sampler(g, input, grid, mode, padding_mode, align_corners): #long, long, long: contants dtype
     mode_i = sym_help._maybe_get_scalar(mode)
@@ -87,12 +89,14 @@ TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
 input_rand = np.random.rand(4, 1, 4, 4).astype('float32')
 grid_rand = np.random.rand(4, 4, 4, 2).astype('float32')
 
+
 class MyModel(torch.nn.Module):
     def __init__(self):
         super(MyModel,self).__init__()
 
     def forward(self, input, grid):
         return F.grid_sample(input, grid, mode='bilinear', padding_mode='reflection', align_corners=True)
+
 
 def export_onnx_model(onnx_model_file):
     dev = torch.device('cuda:0')
@@ -107,6 +111,29 @@ def export_onnx_model(onnx_model_file):
     torch.onnx.export( model, (torch_input, torch_grid), onnx_model_file, verbose=False, 
         input_names=['input', 'grid'],output_names=['output'],opset_version =11,
         dynamic_axes={"input" : {0: "batch_size"}, "grid" : {0: "batch_size"}}, enable_onnx_checker=False)
+
+
+def modify_onnx(onnx_model_file):
+    graph = gs.import_onnx(onnx.load(onnx_model_file))
+    assert(graph is not None)
+
+    for node in graph.nodes:
+        if node.op == 'GridSampler':
+            _, c, h, w = node.inputs[0].shape
+            _, h_g, w_g, _ = node.inputs[1].shape
+            align_corners = node.attrs['aligncorners']
+            inter_mode = node.attrs['interpolationmode']
+            pad_mode = node.attrs['paddingmode']
+            m_type = 0 if node.inputs[0].dtype == np.float32 else 1
+            buffer = np.array([c, h, w, h_g, w_g], dtype=np.int64).tobytes('C') \
+              + np.array([inter_mode, pad_mode], dtype=np.int32).tobytes('C') \
+              + np.array([align_corners], dtype=np.bool).tobytes('C') \
+              + np.array([m_type], dtype=np.int32).tobytes('C')
+            node.attrs = {'name':'GridSampler', 'version':'1', 'namespace':"", 'data':buffer}
+            node.op = 'TRT_PluginV2'
+    
+    onnx.save(gs.export_onnx(graph), onnx_model_file)
+            
 
 # The Onnx path is used for Onnx models.
 def build_engine_onnx(model_file):
@@ -131,10 +158,12 @@ def build_engine_onnx(model_file):
                 return None
         return builder.build_engine(network, config)
 
+
 if __name__=='__main__':
 
     onnx_model_file = "grid_sample.onnx"
     export_onnx_model(onnx_model_file)
+    modify_onnx(onnx_model_file)
 
     # Build a TensorRT engine.
     with build_engine_onnx(onnx_model_file) as engine:
